@@ -282,6 +282,55 @@
   .ig-stat { display:flex; flex-direction:column; align-items:center; gap:2px; }
   .ig-stat-num { font-size:16px; font-weight:700; color:#111; }
   .ig-stat-lbl { font-size:12px; color:#999; }
+
+  /* ── CLEAN VIEW BUTTON ── */
+  .clean-btn {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    width: 44px; height: 44px;          /* 1:1 square */
+    border-radius: 12px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+    transition: background .2s, transform .15s;
+    box-shadow: 0 2px 12px rgba(0,0,0,.2);
+  }
+  .clean-btn:hover { background: rgba(0,0,0,0.75); transform: scale(1.07); }
+  .clean-btn svg { color: white; }
+
+  /* ── CLEAN VIEW MODE ── */
+  body.clean-mode .switcher-bar,
+  body.clean-mode .topbar,
+  body.clean-mode .banner-wrap,
+  body.clean-mode .drawer          { display: none !important; }
+
+  body.clean-mode .main {
+    padding: 0;
+    justify-content: center;
+    min-height: 100vh;
+    background: #f9f9f9;
+  }
+
+  /* Exit button shown only in clean mode */
+  .exit-clean-btn {
+    display: none;
+    position: fixed;
+    top: 16px; right: 16px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(6px);
+    border: none; cursor: pointer;
+    align-items: center; justify-content: center;
+    z-index: 300;
+    transition: background .2s;
+  }
+  body.clean-mode .exit-clean-btn { display: flex; }
+  body.clean-mode .clean-btn      { display: none; }
+  .exit-clean-btn:hover { background: rgba(0,0,0,0.7); }
+  .exit-clean-btn svg { color: white; }
 </style>
 </head>
 <body>
@@ -600,6 +649,27 @@ function handleProfile(e){
 /* ════════════════ INIT ════════════════ */
 buildStrip();
 document.getElementById('channelName').addEventListener('focus',function(){this.select();});
+
+/* ════════════════ CLEAN VIEW ════════════════ */
+function toggleCleanView() {
+  document.body.classList.toggle('clean-mode');
+}
 </script>
+
+<!-- Clean View Button (bottom right, 1:1) -->
+<button class="clean-btn" onclick="toggleCleanView()" title="Clean View">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+    <path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+  </svg>
+</button>
+
+<!-- Exit Clean View Button (top right, only in clean mode) -->
+<button class="exit-clean-btn" onclick="toggleCleanView()" title="Exit Clean View">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+</button>
+
 </body>
 </html>
