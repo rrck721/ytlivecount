@@ -501,39 +501,85 @@
 
 <script>
 /* ════════════════ ODOMETER ENGINE ════════════════ */
-const CELL_H=116, REPS=20, MID_WRAP=10, EASE=0.04;
+const REPS=20, MID_WRAP=10, EASE=0.04;
+let CELL_H = 116; // dynamic — recalculated on each rebuild
 let targetSubs=1000, displaySubs=1000, rafId=null, liveTimer=null, drawerOpen=true;
 let columns=[];
 
+/* ── Compute responsive digit metrics based on digit count + screen width ── */
+function computeMetrics(numStr) {
+  const chars       = numStr.split('');
+  const digitCount  = chars.filter(c => c !== ',').length;
+  const commaCount  = chars.filter(c => c === ',').length;
+
+  // Available width: screen minus small padding, capped at 560px
+  const avail = Math.min(window.innerWidth, 560) - 20;
+
+  // Each digit col ≈ 0.72× fontSize wide; each comma ≈ 0.26× fontSize
+  const ratio = digitCount * 0.72 + commaCount * 0.26;
+  let fontSize = Math.floor(avail / ratio);
+  fontSize = Math.min(96, Math.max(24, fontSize)); // clamp 24–96px
+
+  return {
+    fontSize,
+    cellH  : Math.round(fontSize * 1.21),
+    colW   : Math.round(fontSize * 0.72),
+    commaW : Math.round(fontSize * 0.28),
+  };
+}
+
 function buildStrip() {
-  const row=document.getElementById('digitsRow');
-  const numStr=Math.round(displaySubs).toLocaleString('en-US');
-  const chars=numStr.split('');
-  const digitChars=chars.filter(c=>c!==',');
-  if(columns.length!==digitChars.length){
-    row.innerHTML=''; columns=[];
-    chars.forEach(ch=>{
-      if(ch===','){
-        const col=document.createElement('div');
-        col.className='od-col comma-col';
-        col.innerHTML='<div class="comma-sym">,</div>';
-        row.appendChild(col); return;
+  const row    = document.getElementById('digitsRow');
+  const numStr = Math.round(displaySubs).toLocaleString('en-US');
+  const chars  = numStr.split('');
+  const digitChars = chars.filter(c => c !== ',');
+  const m      = computeMetrics(numStr);
+
+  CELL_H = m.cellH; // update global so applyDigits uses correct height
+
+  // Full rebuild whenever digit count changes OR sizes need updating
+  row.innerHTML = '';
+  columns = [];
+
+  chars.forEach(ch => {
+    if (ch === ',') {
+      const col = document.createElement('div');
+      col.className = 'od-col comma-col';
+      col.style.cssText = `width:${m.commaW}px; padding-bottom:${Math.round(m.cellH*0.07)}px;`;
+      const sym = document.createElement('div');
+      sym.className = 'comma-sym';
+      sym.style.fontSize = m.fontSize + 'px';
+      sym.textContent = ',';
+      col.appendChild(sym);
+      row.appendChild(col);
+      return;
+    }
+
+    const col = document.createElement('div');
+    col.className = 'od-col';
+    col.style.cssText = `width:${m.colW}px; height:${m.cellH}px;`;
+
+    const strip = document.createElement('div');
+    strip.className = 'od-strip';
+
+    for (let r = 0; r < REPS; r++) {
+      for (let d = 0; d <= 9; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'od-digit';
+        cell.style.cssText = `height:${m.cellH}px; font-size:${m.fontSize}px;`;
+        cell.textContent = d;
+        strip.appendChild(cell);
       }
-      const col=document.createElement('div');
-      col.className='od-col';
-      const strip=document.createElement('div');
-      strip.className='od-strip';
-      for(let r=0;r<REPS;r++) for(let d=0;d<=9;d++){
-        const cell=document.createElement('div');
-        cell.className='od-digit'; cell.textContent=d; strip.appendChild(cell);
-      }
-      col.appendChild(strip); row.appendChild(col);
-      const digit=parseInt(ch);
-      const absIndex=MID_WRAP*10+digit;
-      columns.push({el:col,strip,absIndex});
-      strip.style.transform=`translateY(-${absIndex*CELL_H}px)`;
-    });
-  }
+    }
+
+    col.appendChild(strip);
+    row.appendChild(col);
+
+    const digit    = parseInt(ch);
+    const absIndex = MID_WRAP * 10 + digit;
+    columns.push({ el: col, strip, absIndex });
+    strip.style.transform = `translateY(-${absIndex * m.cellH}px)`;
+  });
 }
 
 function rafLoop(){
@@ -550,7 +596,10 @@ function applyDigits(isFinal){
   const numStr=rounded.toLocaleString('en-US');
   const chars=numStr.split('');
   const digitChars=chars.filter(c=>c!==',');
+
+  // Rebuild (with new metrics) whenever digit count changes
   if(columns.length!==digitChars.length){ buildStrip(); return; }
+
   digitChars.forEach((ch,i)=>{
     const target=parseInt(ch), col=columns[i];
     const curVisDigit=col.absIndex%10;
@@ -649,6 +698,9 @@ function handleProfile(e){
 /* ════════════════ INIT ════════════════ */
 buildStrip();
 document.getElementById('channelName').addEventListener('focus',function(){this.select();});
+
+// Re-fit digits on screen resize / rotate
+window.addEventListener('resize', () => { buildStrip(); });
 
 /* ════════════════ CLEAN VIEW ════════════════ */
 function toggleCleanView() {
