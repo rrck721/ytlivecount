@@ -3,39 +3,90 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Subscriber Count</title>
+<title>Live Counter</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
+
+  /* ── THEME VARIABLES ── */
+  :root {
+    --accent:    #FF0000;
+    --accent2:   #FF6B00;
+    --dot-color: #2196F3;
+    --profile-border: 3px solid #ddd;
+  }
+  body.insta {
+    --accent:    #833ab4;
+    --accent2:   #fcb045;
+    --dot-color: #833ab4;
+  }
 
   body {
     font-family: 'Roboto', sans-serif;
     background: #f9f9f9;
     min-height: 100vh;
     display: flex; flex-direction: column;
+    transition: background .3s;
   }
 
-  /* TOP BAR */
+  /* ── PLATFORM SWITCHER ── */
+  .switcher-bar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; padding: 10px 20px;
+    background: #f9f9f9; border-bottom: 1px solid #e5e5e5;
+    flex-shrink: 0;
+  }
+  .plat-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 8px 20px;
+    border: 1.5px solid #e0e0e0;
+    background: white; cursor: pointer;
+    font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 600;
+    color: #999; transition: all .2s;
+  }
+  .plat-btn:first-child { border-radius: 20px 0 0 20px; border-right: none; }
+  .plat-btn:last-child  { border-radius: 0 20px 20px 0; }
+
+  .plat-btn.active-yt {
+    background: #FF0000; border-color: #FF0000; color: white;
+  }
+  .plat-btn.active-ig {
+    background: linear-gradient(90deg,#833ab4,#fd1d1d,#fcb045);
+    border-color: transparent; color: white;
+  }
+
+  /* ── TOP BAR ── */
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 24px; height: 56px;
+    padding: 0 24px; height: 52px;
     background: #f9f9f9; border-bottom: 1px solid #e5e5e5;
-    flex-shrink: 0; z-index: 10;
+    flex-shrink: 0;
   }
   .live-badge { display:flex; align-items:center; gap:8px; font-size:13px; color:#555; }
   .live-dot {
-    width:9px; height:9px; border-radius:50%; background:#2196F3;
+    width:9px; height:9px; border-radius:50%;
+    background: var(--dot-color);
     animation: blink 1.4s ease-in-out infinite;
+    transition: background .3s;
   }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
-  /* BANNER */
+  /* logos */
+  #logoYT { display:flex; }
+  #logoIG { display:none; }
+  body.insta #logoYT { display:none; }
+  body.insta #logoIG { display:flex; }
+
+  /* ── BANNER (YouTube only) ── */
   .banner-wrap {
     width:100%; background:#e2e2e2;
     position:relative; overflow:hidden; cursor:pointer;
     height:0; padding-bottom:16.35%;
     min-height:70px; max-height:210px; flex-shrink:0;
+    transition: all .3s;
   }
+  body.insta .banner-wrap { display: none; }
+
   .banner-img {
     position:absolute; top:0; left:0;
     width:100%; height:100%;
@@ -49,8 +100,8 @@
   }
   .banner-placeholder small { font-size:11px; color:#bbb; }
   .banner-overlay {
-    position:absolute; inset:0;
-    background:rgba(0,0,0,0); transition:background .2s;
+    position:absolute; inset:0; background:rgba(0,0,0,0);
+    transition:background .2s;
     display:flex; align-items:center; justify-content:center;
   }
   .banner-wrap:hover .banner-overlay { background:rgba(0,0,0,.3); }
@@ -62,122 +113,116 @@
   .banner-wrap:hover .banner-hint { opacity:1; }
   #bannerInput { display:none; }
 
-  /* MAIN */
+  /* ── MAIN ── */
   .main {
     flex:1; display:flex; flex-direction:column;
     align-items:center; justify-content:center;
-    padding: 40px 20px 130px;
+    padding: 36px 20px 130px;
   }
 
-  /* PROFILE */
+  /* ── PROFILE ── */
+  .profile-block {
+    display:flex; flex-direction:column;
+    align-items:center; margin-bottom:50px; gap:14px; width:100%;
+  }
   .profile-wrap { position:relative; cursor:pointer; }
+
+  /* YouTube profile ring */
   .profile-ph {
     width:90px; height:90px; border-radius:50%;
     background:linear-gradient(135deg,#FF0000,#FF6B00);
     display:flex; align-items:center; justify-content:center;
     font-size:34px; font-weight:700; color:white;
     border:3px solid #ddd;
+    transition: border .3s;
   }
   .profile-img {
     width:90px; height:90px; border-radius:50%;
-    object-fit:cover; display:none; border:3px solid #ddd;
+    object-fit:cover; display:none;
+    border:3px solid #ddd;
+    transition: border .3s;
   }
+
+  /* Instagram story ring */
+  .ig-ring {
+    display:none;
+    position:absolute; inset:-4px;
+    border-radius:50%;
+    background: linear-gradient(45deg,#fcb045,#fd1d1d,#833ab4);
+    z-index:0; padding:3px;
+  }
+  .ig-ring-inner {
+    width:100%; height:100%; border-radius:50%;
+    background:#f9f9f9;
+  }
+  body.insta .ig-ring { display:block; }
+  body.insta .profile-ph { border:3px solid transparent; position:relative; z-index:1; }
+  body.insta .profile-img { border:3px solid transparent; position:relative; z-index:1; }
+
   .profile-overlay {
     position:absolute; inset:0; border-radius:50%;
     background:rgba(0,0,0,0); transition:background .2s;
     display:flex; align-items:center; justify-content:center;
+    z-index:2;
   }
   .profile-wrap:hover .profile-overlay { background:rgba(0,0,0,.35); }
   .p-upload-icon { opacity:0; transition:opacity .2s; color:white; }
   .profile-wrap:hover .p-upload-icon { opacity:1; }
   #profileInput { display:none; }
 
-  /* PROFILE + NAME block */
-  .profile-block {
-    display: flex; flex-direction: column;
-    align-items: center;
-    margin-bottom: 54px; gap: 14px;
-    width: 100%;
-  }
-  /* CHANNEL NAME */
+  /* ── CHANNEL / USER NAME ── */
   .name-row {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    width: 100%;
+    display:grid; grid-template-columns:1fr auto 1fr;
+    align-items:center; width:100%;
   }
   #channelName {
-    grid-column: 2;
-    font-size: 18px; font-weight: 400; color: #111;
-    border: none; background: transparent; outline: none;
-    text-align: center; font-family: 'Roboto', sans-serif;
-    border-bottom: 2px solid transparent; padding: 2px 6px;
-    transition: border-color .2s; cursor: text;
-    width: 160px; /* Perfect center ke liye fixed width */
+    grid-column:2;
+    font-size:18px; font-weight:400; color:#111;
+    border:none; background:transparent; outline:none;
+    text-align:center; font-family:'Roboto',sans-serif;
+    border-bottom:2px solid transparent; padding:2px 6px;
+    transition:border-color .2s; cursor:text;
+    width:160px; max-width:300px;
   }
-  #channelName:focus { border-bottom: 2px solid #FF0000; }
-  .edit-hint { 
-    grid-column: 3;
-    justify-self: start;
-    margin-left: 6px;
-    font-size: 13px; color: #ccc; opacity: 0; transition: opacity .2s; 
+  #channelName:focus { border-bottom:2px solid var(--accent); }
+  .edit-hint {
+    grid-column:3; justify-self:start; margin-left:6px;
+    font-size:13px; color:#ccc; opacity:0; transition:opacity .2s;
   }
-  .name-row:hover .edit-hint { opacity: 1; }
+  .name-row:hover .edit-hint { opacity:1; }
 
-  /* ═══════════════════════════════════════
-     ODOMETER COUNTER
-     Each digit is a "window" showing a tall
-     strip of 0-9 that scrolls continuously.
-     The strip is infinitely extended by
-     cloning, so it always rolls in one
-     direction — exactly like YouTube.
-  ═══════════════════════════════════════ */
+  /* Instagram username style */
+  body.insta #channelName { font-weight:600; color:#111; }
+
+  /* ── FOLLOWERS LABEL ── */
+  #subsLabel { font-size:15px; color:#888; font-weight:400; letter-spacing:.5px; }
+  body.insta #subsLabel { font-size:14px; color:#999; letter-spacing:.3px; }
+
+  /* ── ODOMETER ── */
   .counter-box { display:flex; flex-direction:column; align-items:center; gap:10px; width:100%; }
   .digits-row  { display:flex; align-items:flex-end; justify-content:center; gap:2px; }
 
-  /* One digit window */
-  .od-col {
-    width: 68px;
-    height: 116px;
-    overflow: hidden;
-    position: relative;
-  }
+  .od-col { width:68px; height:116px; overflow:hidden; position:relative; }
   .od-col.comma-col {
-    width: 22px;
-    overflow: visible;
-    display: flex; align-items: flex-end; padding-bottom: 8px;
+    width:22px; overflow:visible;
+    display:flex; align-items:flex-end; padding-bottom:8px;
   }
   .comma-sym { font-size:88px; font-weight:900; color:#111; line-height:1; }
-
-  /* The tall strip — scrolled via transform */
-  .od-strip {
-    position: absolute;
-    top: 0; left: 0; width: 100%;
-    will-change: transform;
-    /* NO transition here — we drive it entirely with JS / RAF */
+  .od-strip  { position:absolute; top:0; left:0; width:100%; will-change:transform; }
+  .od-digit  {
+    height:116px; display:flex; align-items:center; justify-content:center;
+    font-size:96px; font-weight:900; color:#111;
+    line-height:1; flex-shrink:0; font-variant-numeric:tabular-nums; user-select:none;
   }
 
-  /* Individual digit cell inside strip */
-  .od-digit {
-    height: 116px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 96px; font-weight: 900; color: #111;
-    line-height: 1; flex-shrink: 0;
-    font-variant-numeric: tabular-nums;
-    user-select: none;
-  }
-
-  .subs-label { font-size:15px; color:#888; font-weight:400; letter-spacing:.5px; }
-
-  /* ═══════ SETTINGS DRAWER ═══════ */
+  /* ── SETTINGS DRAWER ── */
   .drawer {
     position:fixed; bottom:0; left:0; right:0;
     background:white; border-top:2px solid #f0f0f0;
     box-shadow:0 -6px 32px rgba(0,0,0,.09); z-index:50;
   }
   .drawer-tab {
-    width:100%; background:none; border:none;
-    padding:11px 20px;
+    width:100%; background:none; border:none; padding:11px 20px;
     display:flex; align-items:center; justify-content:center; gap:8px;
     cursor:pointer; font-size:11px; font-weight:700; color:#888;
     font-family:'Roboto',sans-serif; letter-spacing:1px;
@@ -186,73 +231,117 @@
   .drawer-tab:hover { background:#fafafa; }
   .drawer-arrow { font-size:9px; transition:transform .3s; }
   .drawer.closed .drawer-arrow { transform:rotate(180deg); }
-
   .drawer-body {
-    overflow:hidden; max-height:400px; opacity:1;
+    overflow:hidden; max-height:420px; opacity:1;
     transition:max-height .38s cubic-bezier(.4,0,.2,1), opacity .25s;
   }
   .drawer.closed .drawer-body { max-height:0; opacity:0; }
   .drawer-inner { padding:18px 20px 20px; }
 
   .fields-grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
     gap:14px 16px; margin-bottom:16px;
   }
   .field { display:flex; flex-direction:column; gap:5px; }
-  .field label {
-    font-size:10px; font-weight:700; color:#aaa;
-    text-transform:uppercase; letter-spacing:.7px;
-  }
+  .field label { font-size:10px; font-weight:700; color:#aaa; text-transform:uppercase; letter-spacing:.7px; }
   .field input {
     border:1.5px solid #e8e8e8; border-radius:8px;
     padding:9px 12px; font-size:14px; font-family:'Roboto',sans-serif;
     color:#111; outline:none; background:#fafafa;
     transition:border-color .2s, background .2s; width:100%;
   }
-  .field input:focus { border-color:#FF0000; background:white; }
+  .field input:focus { border-color:var(--accent); background:white; }
   .field .hint { font-size:10px; color:#ccc; }
 
-  .drawer-footer {
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-  }
+  .drawer-footer { display:flex; align-items:center; justify-content:space-between; gap:10px; }
   .footer-note { font-size:11px; color:#bbb; max-width:340px; line-height:1.5; }
+
   .go-btn {
-    background:#FF0000; color:white; border:none; border-radius:22px;
+    color:white; border:none; border-radius:22px;
     padding:11px 32px; font-size:14px; font-weight:700;
     cursor:pointer; font-family:'Roboto',sans-serif;
-    transition:background .15s, transform .1s; white-space:nowrap;
+    transition:opacity .15s, transform .1s; white-space:nowrap;
+    background:var(--accent);
   }
-  .go-btn:hover { background:#d50000; }
+  body.insta .go-btn {
+    background:linear-gradient(90deg,#833ab4,#fd1d1d,#fcb045);
+  }
+  .go-btn:hover { opacity:.88; }
   .go-btn:active { transform:scale(.96); }
 
-  .running-badge {
-    display:none; align-items:center; gap:6px;
-    font-size:12px; color:#2BA640; font-weight:600;
-  }
+  .running-badge { display:none; align-items:center; gap:6px; font-size:12px; color:#2BA640; font-weight:600; }
   .running-badge.show { display:flex; }
   .running-dot { width:7px; height:7px; border-radius:50%; background:#2BA640; animation:blink 1s infinite; }
+
+  /* Instagram extra info row */
+  .ig-stats {
+    display: none;
+    gap: 32px; margin-bottom: 8px;
+  }
+  body.insta .ig-stats { display: flex; }
+  .ig-stat { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .ig-stat-num { font-size:16px; font-weight:700; color:#111; }
+  .ig-stat-lbl { font-size:12px; color:#999; }
 </style>
 </head>
 <body>
+
+<!-- PLATFORM SWITCHER -->
+<div class="switcher-bar">
+  <button class="plat-btn active-yt" id="btnYT" onclick="setPlatform('yt')">
+    <!-- YT icon -->
+    <svg width="18" height="13" viewBox="0 0 18 13"><rect width="18" height="13" rx="3" fill="currentColor"/><polygon points="7,3 7,10 13,6.5" fill="white"/></svg>
+    YouTube
+  </button>
+  <button class="plat-btn" id="btnIG" onclick="setPlatform('ig')">
+    <!-- IG icon -->
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+      <circle cx="12" cy="12" r="4"/>
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+    </svg>
+    Instagram
+  </button>
+</div>
 
 <!-- TOP BAR -->
 <div class="topbar">
   <div class="live-badge">
     <div class="live-dot"></div>
-    Updating live
+    <span id="liveText">Updating live</span>
   </div>
-  <svg height="22" viewBox="0 0 132 30" xmlns="http://www.w3.org/2000/svg">
-    <!-- Red play button box -->
-    <rect x="0" y="0" width="46" height="30" rx="7" fill="#FF0000"/>
-    <polygon points="18,8 18,22 34,15" fill="white"/>
-    <!-- YouTube wordmark -->
-    <text x="52" y="22" font-family="Roboto,Arial,sans-serif" font-size="20" font-weight="700" fill="#282828">YouTube</text>
-  </svg>
+
+  <!-- YouTube Logo -->
+  <div id="logoYT">
+    <svg height="22" viewBox="0 0 132 30" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="46" height="30" rx="7" fill="#FF0000"/>
+      <polygon points="18,8 18,22 34,15" fill="white"/>
+      <text x="52" y="22" font-family="Roboto,Arial,sans-serif" font-size="20" font-weight="700" fill="#282828">YouTube</text>
+    </svg>
+  </div>
+
+  <!-- Instagram Logo -->
+  <div id="logoIG">
+    <svg height="26" viewBox="0 0 120 30" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="igGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#fcb045"/>
+          <stop offset="50%" style="stop-color:#fd1d1d"/>
+          <stop offset="100%" style="stop-color:#833ab4"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="2" width="26" height="26" rx="7" fill="url(#igGrad)"/>
+      <rect x="5" y="7" width="16" height="16" rx="4" fill="none" stroke="white" stroke-width="2"/>
+      <circle cx="13" cy="15" r="4" fill="none" stroke="white" stroke-width="1.8"/>
+      <circle cx="20" cy="9" r="1.2" fill="white"/>
+      <text x="32" y="22" font-family="'Roboto',sans-serif" font-size="19" font-weight="700" fill="#111">Instagram</text>
+    </svg>
+  </div>
+
   <div style="width:110px"></div>
 </div>
 
-<!-- BANNER -->
+<!-- BANNER (YouTube only) -->
 <div class="banner-wrap" onclick="document.getElementById('bannerInput').click()">
   <div class="banner-placeholder" id="bannerPh">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="#bbb"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
@@ -274,6 +363,7 @@
 
   <div class="profile-block">
     <div class="profile-wrap" onclick="document.getElementById('profileInput').click()">
+      <div class="ig-ring"><div class="ig-ring-inner"></div></div>
       <div class="profile-ph" id="profilePh">Y</div>
       <img class="profile-img" id="profileImg" alt="profile">
       <div class="profile-overlay">
@@ -284,16 +374,24 @@
     </div>
     <input type="file" id="profileInput" accept="image/*" onchange="handleProfile(event)">
 
+    <!-- Instagram extra stats (Posts, Following) -->
+    <div class="ig-stats">
+      <div class="ig-stat"><span class="ig-stat-num" id="igPosts">0</span><span class="ig-stat-lbl">posts</span></div>
+      <div class="ig-stat"><span class="ig-stat-num ig-followers-mini"></span></div>
+      <div class="ig-stat"><span class="ig-stat-num" id="igFollowing">0</span><span class="ig-stat-lbl">following</span></div>
+    </div>
+
     <div class="name-row">
       <input type="text" id="channelName" value="Your Channel"
-        oninput="autoSize(this)" onkeydown="if(event.key==='Enter')this.blur()">
+        maxlength="75"
+        onkeydown="if(event.key==='Enter')this.blur()">
       <span class="edit-hint">✏️</span>
     </div>
   </div>
 
   <div class="counter-box">
     <div class="digits-row" id="digitsRow"></div>
-    <div class="subs-label">Subscribers</div>
+    <div id="subsLabel">Subscribers</div>
   </div>
 </div>
 
@@ -310,29 +408,41 @@
     <div class="drawer-inner">
       <div class="fields-grid">
         <div class="field">
-          <label>Starting Subscribers</label>
+          <label id="lStartLabel">Starting Subscribers</label>
           <input type="number" id="fStart" value="1000" min="0" placeholder="e.g. 500000">
           <span class="hint">Counter begins from this number</span>
         </div>
         <div class="field">
           <label>Interval (seconds)</label>
-          <input type="number" id="fInterval" value="3" min="0.5" max="120" step="0.5" placeholder="e.g. 3">
-          <span class="hint">How often a subscriber is added</span>
+          <input type="number" id="fInterval" value="3" min="0.5" max="120" step="0.5">
+          <span class="hint">How often count is added</span>
         </div>
         <div class="field">
           <label>Min per tick</label>
-          <input type="number" id="fMin" value="1" min="0" placeholder="e.g. 1">
+          <input type="number" id="fMin" value="1" min="0">
           <span class="hint">Least added each interval</span>
         </div>
         <div class="field">
           <label>Max per tick</label>
-          <input type="number" id="fMax" value="3" min="1" placeholder="e.g. 10">
+          <input type="number" id="fMax" value="3" min="1">
           <span class="hint">Most added each interval</span>
+        </div>
+        <!-- Instagram extra fields -->
+        <div class="field" id="igPostsField" style="display:none">
+          <label>Posts Count</label>
+          <input type="number" id="fPosts" value="42" min="0">
+          <span class="hint">Shown on profile</span>
+        </div>
+        <div class="field" id="igFollowingField" style="display:none">
+          <label>Following Count</label>
+          <input type="number" id="fFollowing" value="318" min="0">
+          <span class="hint">Shown on profile</span>
         </div>
       </div>
       <div class="drawer-footer">
         <div class="footer-note">
-          Every <b id="pInterval">3</b>s, <b id="pMin">1</b>–<b id="pMax">3</b> subscribers will be added with a smooth roll animation.
+          Every <b id="pInterval">3</b>s, <b id="pMin">1</b>–<b id="pMax">3</b>
+          <span id="pLabel">subscribers</span> will be added smoothly.
         </div>
         <button class="go-btn" onclick="applyAndStart()">▶ START LIVE</button>
       </div>
@@ -341,223 +451,155 @@
 </div>
 
 <script>
-/* ══════════════════════════════════════════════════
-   SMOOTH ODOMETER ENGINE
+/* ════════════════ ODOMETER ENGINE ════════════════ */
+const CELL_H=116, REPS=20, MID_WRAP=10, EASE=0.04;
+let targetSubs=1000, displaySubs=1000, rafId=null, liveTimer=null, drawerOpen=true;
+let columns=[];
 
-   How it works:
-   - `targetSubs`  = the real subscriber count (jumps instantly on each tick)
-   - `displaySubs` = what's actually shown (smoothly chases targetSubs via RAF)
-   - Each RAF frame, displaySubs moves a fraction closer to targetSubs
-     using an ease-out curve → feels organic, never mechanical
-   - Each digit column has a long strip (0-9 × 20 = 200 cells)
-     We track an absolute "offset index" per column so the strip
-     ONLY ever rolls in one direction — exactly like a real odometer
-   ══════════════════════════════════════════════════ */
-
-const CELL_H   = 116;   // px height of each digit cell
-const REPS     = 20;    // how many times 0-9 repeats in strip
-const MID_WRAP = 10;    // wrap back to this repeat when near edges
-const EASE     = 0.04;  // fraction of gap closed per RAF frame (lower = smoother)
-
-let targetSubs  = 1000;
-let displaySubs = 1000; // float — fractional digits allowed for smoothness
-let rafId       = null;
-let liveTimer   = null;
-let drawerOpen  = true;
-
-/* Per-column state */
-let columns = [];  // { el, strip, absIndex } — absIndex is float offset in strip cells
-
-/* ── Build / Rebuild columns ── */
 function buildStrip() {
-  const row    = document.getElementById('digitsRow');
-  const numStr = Math.round(displaySubs).toLocaleString('en-US');
-  const chars  = numStr.split('');
-  const digitChars = chars.filter(c => c !== ',');
-
-  // Only rebuild if digit count changed
-  if (columns.length !== digitChars.length) {
-    row.innerHTML = '';
-    columns = [];
-
-    chars.forEach(ch => {
-      if (ch === ',') {
-        const col = document.createElement('div');
-        col.className = 'od-col comma-col';
-        col.innerHTML = '<div class="comma-sym">,</div>';
-        row.appendChild(col);
-        return;
+  const row=document.getElementById('digitsRow');
+  const numStr=Math.round(displaySubs).toLocaleString('en-US');
+  const chars=numStr.split('');
+  const digitChars=chars.filter(c=>c!==',');
+  if(columns.length!==digitChars.length){
+    row.innerHTML=''; columns=[];
+    chars.forEach(ch=>{
+      if(ch===','){
+        const col=document.createElement('div');
+        col.className='od-col comma-col';
+        col.innerHTML='<div class="comma-sym">,</div>';
+        row.appendChild(col); return;
       }
-
-      const col   = document.createElement('div');
-      col.className = 'od-col';
-      const strip = document.createElement('div');
-      strip.className = 'od-strip';
-
-      // Fill strip: 0-9 repeated REPS times
-      for (let r = 0; r < REPS; r++) {
-        for (let d = 0; d <= 9; d++) {
-          const cell = document.createElement('div');
-          cell.className = 'od-digit';
-          cell.textContent = d;
-          strip.appendChild(cell);
-        }
+      const col=document.createElement('div');
+      col.className='od-col';
+      const strip=document.createElement('div');
+      strip.className='od-strip';
+      for(let r=0;r<REPS;r++) for(let d=0;d<=9;d++){
+        const cell=document.createElement('div');
+        cell.className='od-digit'; cell.textContent=d; strip.appendChild(cell);
       }
-
-      col.appendChild(strip);
-      row.appendChild(col);
-
-      // Start absIndex in the middle of the strip so we have room to go up/down
-      const digit = parseInt(ch);
-      const absIndex = MID_WRAP * 10 + digit;  // absolute cell index
-
-      columns.push({ el: col, strip, absIndex: absIndex });
-      // Position strip immediately (no animation)
-      strip.style.transform = `translateY(-${absIndex * CELL_H}px)`;
+      col.appendChild(strip); row.appendChild(col);
+      const digit=parseInt(ch);
+      const absIndex=MID_WRAP*10+digit;
+      columns.push({el:col,strip,absIndex});
+      strip.style.transform=`translateY(-${absIndex*CELL_H}px)`;
     });
-    return;
   }
-
-  // Same digit count — just update absIndex targets (done in RAF loop)
 }
 
-/* ── RAF loop: smoothly move displaySubs toward targetSubs ── */
-function rafLoop() {
-  const diff = targetSubs - displaySubs;
-
-  if (Math.abs(diff) < 0.01) {
-    displaySubs = targetSubs;
-    applyDigits(true); // final snap
-    rafId = null;
-    return;
-  }
-
-  // Ease-out: move EASE fraction of remaining gap each frame
-  displaySubs += diff * EASE;
+function rafLoop(){
+  const diff=targetSubs-displaySubs;
+  if(Math.abs(diff)<0.01){ displaySubs=targetSubs; applyDigits(true); rafId=null; return; }
+  displaySubs+=diff*EASE;
   applyDigits(false);
-  rafId = requestAnimationFrame(rafLoop);
+  rafId=requestAnimationFrame(rafLoop);
 }
+function startRAF(){ if(!rafId) rafId=requestAnimationFrame(rafLoop); }
 
-function startRAF() {
-  if (!rafId) rafId = requestAnimationFrame(rafLoop);
-}
-
-/* ── Apply current displaySubs to columns ── */
-function applyDigits(isFinal) {
-  const rounded = Math.round(displaySubs);
-  const numStr  = rounded.toLocaleString('en-US');
-  const chars   = numStr.split('');
-  const digitChars = chars.filter(c => c !== ',');
-
-  // Rebuild if digit count changed (e.g. 999→1000)
-  if (columns.length !== digitChars.length) {
-    buildStrip();
-    return;
-  }
-
-  digitChars.forEach((ch, i) => {
-    const target = parseInt(ch);
-    const col    = columns[i];
-    const curVisDigit = col.absIndex % 10; // current digit shown
-
-    // How many steps to roll forward to reach target digit?
-    let steps = (target - curVisDigit + 10) % 10;
-    // But if displaySubs is going DOWN (very rare / not used), go backward
-    // We always roll forward to keep the one-direction odometer feel
-
-    if (steps !== 0 || isFinal) {
-      col.absIndex += steps;
-
-      // If absIndex is getting too high, silently jump back (no visual glitch)
-      if (col.absIndex > (REPS - 3) * 10) {
-        col.absIndex -= MID_WRAP * 10;
-        col.strip.style.transition = 'none';
-        col.strip.style.transform  = `translateY(-${col.absIndex * CELL_H}px)`;
-        // Force reflow so next frame uses transition again
+function applyDigits(isFinal){
+  const rounded=Math.round(displaySubs);
+  const numStr=rounded.toLocaleString('en-US');
+  const chars=numStr.split('');
+  const digitChars=chars.filter(c=>c!==',');
+  if(columns.length!==digitChars.length){ buildStrip(); return; }
+  digitChars.forEach((ch,i)=>{
+    const target=parseInt(ch), col=columns[i];
+    const curVisDigit=col.absIndex%10;
+    let steps=(target-curVisDigit+10)%10;
+    if(steps!==0||isFinal){
+      col.absIndex+=steps;
+      if(col.absIndex>(REPS-3)*10){
+        col.absIndex-=MID_WRAP*10;
+        col.strip.style.transition='none';
+        col.strip.style.transform=`translateY(-${col.absIndex*CELL_H}px)`;
         col.strip.getBoundingClientRect();
       }
-
-      // Smooth CSS transition for the roll (shorter = snappier per-step feel)
-      col.strip.style.transition = `transform 0.55s cubic-bezier(0.25, 1, 0.5, 1)`;
-      col.strip.style.transform  = `translateY(-${col.absIndex * CELL_H}px)`;
+      col.strip.style.transition='transform 0.55s cubic-bezier(0.25,1,0.5,1)';
+      col.strip.style.transform=`translateY(-${col.absIndex*CELL_H}px)`;
     }
   });
 }
 
-/* ── Live ticker ── */
-function startLive(intervalMs, minTick, maxTick) {
-  if (liveTimer) clearInterval(liveTimer);
-  liveTimer = setInterval(() => {
-    const gain = Math.floor(Math.random() * (maxTick - minTick + 1)) + minTick;
-    targetSubs += gain;
-    startRAF();
-  }, intervalMs);
+/* ════════════════ PLATFORM SWITCH ════════════════ */
+let currentPlatform = 'yt';
+
+function setPlatform(p) {
+  currentPlatform = p;
+  document.body.classList.toggle('insta', p==='ig');
+
+  document.getElementById('btnYT').className = 'plat-btn' + (p==='yt' ? ' active-yt' : '');
+  document.getElementById('btnIG').className = 'plat-btn' + (p==='ig' ? ' active-ig' : '');
+
+  // Label
+  document.getElementById('subsLabel').textContent   = p==='ig' ? 'Followers' : 'Subscribers';
+  document.getElementById('lStartLabel').textContent  = p==='ig' ? 'Starting Followers' : 'Starting Subscribers';
+  document.getElementById('pLabel').textContent       = p==='ig' ? 'followers' : 'subscribers';
+  document.getElementById('channelName').placeholder  = p==='ig' ? 'username' : 'Your Channel';
+
+  // Instagram extra fields
+  document.getElementById('igPostsField').style.display    = p==='ig' ? '' : 'none';
+  document.getElementById('igFollowingField').style.display = p==='ig' ? '' : 'none';
+
+  // Sync posts / following display
+  if(p==='ig') updateIGStats();
 }
 
-/* ── Apply settings ── */
-function applyAndStart() {
-  const start    = parseInt(document.getElementById('fStart').value);
-  const interval = parseFloat(document.getElementById('fInterval').value) || 3;
-  const minTick  = parseInt(document.getElementById('fMin').value) || 1;
-  let   maxTick  = parseInt(document.getElementById('fMax').value) || 3;
-  if (maxTick < minTick) maxTick = minTick;
-  if (!isNaN(start) && start >= 0) {
-    targetSubs  = start;
-    displaySubs = start;
-  }
+function updateIGStats() {
+  document.getElementById('igPosts').textContent    = document.getElementById('fPosts').value || '0';
+  document.getElementById('igFollowing').textContent = document.getElementById('fFollowing').value || '0';
+}
+document.getElementById('fPosts').addEventListener('input', updateIGStats);
+document.getElementById('fFollowing').addEventListener('input', updateIGStats);
 
+/* ════════════════ APPLY & START ════════════════ */
+function applyAndStart(){
+  const start   =parseInt(document.getElementById('fStart').value);
+  const interval=parseFloat(document.getElementById('fInterval').value)||3;
+  const minTick =parseInt(document.getElementById('fMin').value)||1;
+  let   maxTick =parseInt(document.getElementById('fMax').value)||3;
+  if(maxTick<minTick) maxTick=minTick;
+  if(!isNaN(start)&&start>=0){ targetSubs=start; displaySubs=start; }
+  if(currentPlatform==='ig') updateIGStats();
   buildStrip();
-  startLive(Math.max(300, interval * 1000), minTick, maxTick);
+  if(liveTimer) clearInterval(liveTimer);
+  liveTimer=setInterval(()=>{ targetSubs+=Math.floor(Math.random()*(maxTick-minTick+1))+minTick; startRAF(); }, Math.max(300,interval*1000));
   document.getElementById('runningBadge').classList.add('show');
-  if (drawerOpen) toggleDrawer();
+  if(drawerOpen) toggleDrawer();
 }
 
-/* ── Drawer ── */
-function toggleDrawer() {
-  drawerOpen = !drawerOpen;
-  document.getElementById('drawer').classList.toggle('closed', !drawerOpen);
-  document.getElementById('drawerArrow').textContent = drawerOpen ? '▲' : '▼';
+/* ════════════════ DRAWER ════════════════ */
+function toggleDrawer(){
+  drawerOpen=!drawerOpen;
+  document.getElementById('drawer').classList.toggle('closed',!drawerOpen);
+  document.getElementById('drawerArrow').textContent=drawerOpen?'▲':'▼';
 }
 
 /* Live preview */
-['fInterval','fMin','fMax'].forEach(id =>
-  document.getElementById(id).addEventListener('input', () => {
-    document.getElementById('pInterval').textContent = document.getElementById('fInterval').value || '3';
-    document.getElementById('pMin').textContent      = document.getElementById('fMin').value      || '1';
-    document.getElementById('pMax').textContent      = document.getElementById('fMax').value      || '3';
+['fInterval','fMin','fMax'].forEach(id=>
+  document.getElementById(id).addEventListener('input',()=>{
+    document.getElementById('pInterval').textContent=document.getElementById('fInterval').value||'3';
+    document.getElementById('pMin').textContent=document.getElementById('fMin').value||'1';
+    document.getElementById('pMax').textContent=document.getElementById('fMax').value||'3';
   })
 );
 
-/* ── Uploads ── */
-function handleBanner(e) {
-  const f = e.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = ev => {
-    const img = document.getElementById('bannerImg');
-    img.src = ev.target.result; img.style.display = 'block';
-    document.getElementById('bannerPh').style.display = 'none';
-  };
+/* ════════════════ UPLOADS ════════════════ */
+function handleBanner(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{ const img=document.getElementById('bannerImg'); img.src=ev.target.result; img.style.display='block'; document.getElementById('bannerPh').style.display='none'; };
   r.readAsDataURL(f);
 }
-function handleProfile(e) {
-  const f = e.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = ev => {
-    const img = document.getElementById('profileImg');
-    img.src = ev.target.result; img.style.display = 'block';
-    document.getElementById('profilePh').style.display = 'none';
-  };
+function handleProfile(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{ const img=document.getElementById('profileImg'); img.src=ev.target.result; img.style.display='block'; document.getElementById('profilePh').style.display='none'; };
   r.readAsDataURL(f);
 }
 
-/* ── Name input ── */
-function autoSize(el) { /* no-op: browser sizes naturally */ }
-const _nameEl = document.getElementById('channelName');
-_nameEl.addEventListener('focus', function(){ this.select(); });
-
-/* ── Init ── */
+/* ════════════════ INIT ════════════════ */
 buildStrip();
-autoSize(_nameEl);
+document.getElementById('channelName').addEventListener('focus',function(){this.select();});
 </script>
 </body>
 </html>
